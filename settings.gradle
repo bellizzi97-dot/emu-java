@@ -1,0 +1,2 @@
+rootProject.name = 'emu-java'
+include ':app', ':emulator-core'
