@@ -22,5 +22,4 @@ android {
 
 dependencies {
     implementation project(':emulator-core')
-    implementation 'com.android.tools:r8:8.2.33'
 }
