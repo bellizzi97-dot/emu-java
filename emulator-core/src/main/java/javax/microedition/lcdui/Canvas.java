@@ -1,7 +1,5 @@
 package javax.microedition.lcdui;
 
-import android.graphics.Graphics;
-
 public abstract class Canvas extends Displayable {
     public static final int UP = -1;
     public static final int DOWN = -2;
@@ -9,11 +7,9 @@ public abstract class Canvas extends Displayable {
     public static final int RIGHT = -4;
     public static final int FIRE = -5;
 
-    protected abstract void paint(Object g);
+    protected abstract void paint(Graphics g);
 
-    public void repaint() {
-        // Notificar al motor que vuelva a dibujar
-    }
+    public void repaint() {}
 
     protected void keyPressed(int keyCode) {}
     protected void keyReleased(int keyCode) {}
