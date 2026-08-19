@@ -17,5 +17,4 @@ android {
 
 dependencies {
     implementation project(':emulator-core')
-    implementation 'androidx.appcompat:appcompat:1.6.1'
 }
