@@ -5,6 +5,15 @@ public class EmulatorEngine implements Runnable {
     private Thread gameThread;
     private final int targetFps = 30;
     private final long frameTimeMs = 1000 / targetFps;
+    private FrameUpdateListener listener;
+
+    public interface FrameUpdateListener {
+        void onFrameUpdate();
+    }
+
+    public void setFrameUpdateListener(FrameUpdateListener listener) {
+        this.listener = listener;
+    }
 
     public void start() {
         if (isRunning) return;
@@ -24,13 +33,19 @@ public class EmulatorEngine implements Runnable {
         }
     }
 
+    public void sendKeyEvent(int keyCode, boolean isPressed) {
+        // Reservado para despachar eventos a la pila MIDlet
+    }
+
     @Override
     public void run() {
         while (isRunning) {
             long startTime = System.currentTimeMillis();
 
-            // Lógica del ciclo del juego
             updateGameLogic();
+            if (listener != null) {
+                listener.onFrameUpdate();
+            }
 
             long elapsedTime = System.currentTimeMillis() - startTime;
             long sleepTime = frameTimeMs - elapsedTime;
@@ -46,6 +61,6 @@ public class EmulatorEngine implements Runnable {
     }
 
     private void updateGameLogic() {
-        // Reservado para la interpretación del bytecode J2ME
+        // Lógica de emulación
     }
 }

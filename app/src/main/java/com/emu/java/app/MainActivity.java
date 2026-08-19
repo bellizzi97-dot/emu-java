@@ -6,12 +6,14 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.widget.LinearLayout;
 import android.widget.Toast;
+import com.emu.java.core.EmulatorEngine;
 import com.emu.java.core.JarLoader;
 import com.emu.java.core.KeyMapper;
 
 public class MainActivity extends Activity {
     private J2CanvasView canvasView;
     private GamePadView gamePadView;
+    private EmulatorEngine engine;
     private static final int PICK_JAR_REQUEST = 1;
 
     @Override
@@ -33,9 +35,24 @@ public class MainActivity extends Activity {
         layout.addView(gamePadView, padParams);
         setContentView(layout);
 
-        // Lanzar selector de archivos al iniciar
+        engine = new EmulatorEngine();
+        engine.setFrameUpdateListener(new EmulatorEngine.FrameUpdateListener() {
+            @Override
+            public void onFrameUpdate() {
+                canvasView.postInvalidate();
+            }
+        });
+
+        gamePadView.setOnKeyListener(new GamePadView.OnKeyListener() {
+            @Override
+            public void onKeyPair(KeyMapper.GbButton button, boolean isPressed) {
+                int j2meKey = KeyMapper.toJ2meKey(button);
+                engine.sendKeyEvent(j2meKey, isPressed);
+            }
+        });
+
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType("application/java-archive"); // Filtro para .jar
+        intent.setType("application/java-archive");
         startActivityForResult(Intent.createChooser(intent, "Selecciona tu juego Java"), PICK_JAR_REQUEST);
     }
 
@@ -48,10 +65,19 @@ public class MainActivity extends Activity {
                     JarLoader loader = new JarLoader();
                     loader.loadJar(uri.getPath());
                     Toast.makeText(this, "Cargando: " + loader.getAppName(), Toast.LENGTH_LONG).show();
+                    engine.start();
                 } catch (Exception e) {
                     Toast.makeText(this, "Error cargando archivo", Toast.LENGTH_SHORT).show();
                 }
             }
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (engine != null) {
+            engine.stop();
         }
     }
 }
