@@ -10,6 +10,10 @@ import com.emu.java.core.EmulatorEngine;
 import com.emu.java.core.JarLoader;
 import com.emu.java.core.KeyMapper;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+
 public class MainActivity extends Activity {
     private J2CanvasView canvasView;
     private GamePadView gamePadView;
@@ -52,25 +56,49 @@ public class MainActivity extends Activity {
         });
 
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType("application/java-archive");
+        intent.setType("*/*");
+        String[] mimeTypes = {"application/java-archive", "application/x-java-archive", "application/octet-stream"};
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
         startActivityForResult(Intent.createChooser(intent, "Selecciona tu juego Java"), PICK_JAR_REQUEST);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == PICK_JAR_REQUEST && resultCode == RESULT_OK) {
+        if (requestCode == PICK_JAR_REQUEST && resultCode == RESULT_OK && data != null) {
             Uri uri = data.getData();
             if (uri != null) {
                 try {
+                    File tempFile = copyUriToTempFile(uri);
                     JarLoader loader = new JarLoader();
-                    loader.loadJar(uri.getPath());
-                    Toast.makeText(this, "Cargando: " + loader.getAppName(), Toast.LENGTH_LONG).show();
+                    loader.loadJar(tempFile.getAbsolutePath());
+
+                    String appName = loader.getAppName();
+                    if (appName == null || appName.isEmpty()) {
+                        appName = "Juego Java";
+                    }
+                    Toast.makeText(this, "Cargando: " + appName, Toast.LENGTH_LONG).show();
                     engine.start();
                 } catch (Exception e) {
-                    Toast.makeText(this, "Error cargando archivo", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 }
             }
         }
+    }
+
+    private File copyUriToTempFile(Uri uri) throws Exception {
+        InputStream inputStream = getContentResolver().openInputStream(uri);
+        File tempFile = new File(getCacheDir(), "loaded_game.jar");
+        FileOutputStream outputStream = new FileOutputStream(tempFile);
+
+        byte[] buffer = new byte[4096];
+        int bytesRead;
+        while ((bytesRead = inputStream.read(buffer)) != -1) {
+            outputStream.write(buffer, 0, bytesRead);
+        }
+
+        inputStream.close();
+        outputStream.close();
+        return tempFile;
     }
 
     @Override
