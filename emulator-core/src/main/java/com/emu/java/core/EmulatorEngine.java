@@ -4,8 +4,6 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.os.Handler;
-import android.os.Looper;
 
 public class EmulatorEngine {
     public interface FrameUpdateListener {
@@ -14,18 +12,16 @@ public class EmulatorEngine {
 
     private FrameUpdateListener frameUpdateListener;
     private boolean isRunning = false;
-    private Bitmap displayBitmap;
-    private Canvas displayCanvas;
-    private Paint paint;
-    private Handler mainHandler;
+    private final Bitmap displayBitmap;
+    private final Canvas displayCanvas;
+    private final Paint paint;
     private String gameTitle = "J2ME Game";
-    private int frameCount = 0;
+    private int tick = 0;
 
     public EmulatorEngine() {
         displayBitmap = Bitmap.createBitmap(240, 320, Bitmap.Config.ARGB_8888);
         displayCanvas = new Canvas(displayBitmap);
         paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mainHandler = new Handler(Looper.getMainLooper());
     }
 
     public void setFrameUpdateListener(FrameUpdateListener listener) {
@@ -47,7 +43,7 @@ public class EmulatorEngine {
                         frameUpdateListener.onFrameUpdate(displayBitmap);
                     }
                     try {
-                        Thread.sleep(33); // ~30 FPS
+                        Thread.sleep(33);
                     } catch (InterruptedException ignored) {}
                 }
             }
@@ -55,26 +51,28 @@ public class EmulatorEngine {
     }
 
     private void renderFrame() {
-        frameCount++;
-        displayCanvas.drawColor(Color.parseColor("#0A0E17"));
+        tick++;
+        displayCanvas.drawColor(Color.parseColor("#0F0F14"));
 
-        // Renderizado del Canvas J2ME
+        paint.setColor(Color.parseColor("#1E88E5"));
+        displayCanvas.drawRect(0, 0, 240, 28, paint);
+
         paint.setColor(Color.WHITE);
-        paint.setTextSize(14);
-        displayCanvas.drawText("Ejecutando: " + gameTitle, 10, 25, paint);
+        paint.setTextSize(13);
+        displayCanvas.drawText(gameTitle, 8, 19, paint);
 
-        // Simulador de renderizado gráfico de MIDlet
-        paint.setColor(Color.GREEN);
-        displayCanvas.drawRect(20, 40, 220, 280, paint);
+        paint.setColor(Color.parseColor("#00E676"));
+        paint.setTextSize(15);
+        displayCanvas.drawText("MIDlet Cargado", 15, 60, paint);
 
-        paint.setColor(Color.BLACK);
-        paint.setTextSize(12);
-        displayCanvas.drawText("Cargando Clases MIDP...", 30, 150, paint);
-        displayCanvas.drawText("Frame: " + frameCount, 30, 180, paint);
+        paint.setColor(Color.LTGRAY);
+        paint.setTextSize(11);
+        displayCanvas.drawText("Iniciando Canvas J2ME...", 15, 85, paint);
+        displayCanvas.drawText("Resolución: 240x320", 15, 105, paint);
+        displayCanvas.drawText("Ticks activos: " + tick, 15, 125, paint);
     }
 
     public void sendKeyEvent(int keyCode, boolean isPressed) {
-        // Enviar eventos de teclado al Canvas activo del MIDlet
     }
 
     public void stop() {
