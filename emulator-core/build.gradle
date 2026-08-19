@@ -1,8 +1,12 @@
 plugins {
-    id 'java-library'
+    id 'com.android.library'
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+android {
+    namespace 'com.emu.java.core'
+    compileSdk 34
+
+    defaultConfig {
+        minSdk 24
+    }
 }
