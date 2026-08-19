@@ -4,100 +4,80 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.os.Handler;
+import android.os.Looper;
 
-public class EmulatorEngine implements Runnable {
-    private boolean isRunning = false;
-    private Thread gameThread;
-    private final int targetFps = 30;
-    private final long frameTimeMs = 1000 / targetFps;
-    private FrameUpdateListener listener;
-    private Bitmap frameBuffer;
-    private Canvas canvasBuffer;
-    private Paint paint;
-    private String currentGameName = "Sin juego";
-    private int frameCounter = 0;
-
+public class EmulatorEngine {
     public interface FrameUpdateListener {
         void onFrameUpdate(Bitmap frame);
     }
 
-    public EmulatorEngine() {
-        frameBuffer = Bitmap.createBitmap(240, 320, Bitmap.Config.ARGB_8888);
-        canvasBuffer = new Canvas(frameBuffer);
-        paint = new Paint();
-        paint.setAntiAlias(true);
-    }
+    private FrameUpdateListener frameUpdateListener;
+    private boolean isRunning = false;
+    private Bitmap displayBitmap;
+    private Canvas displayCanvas;
+    private Paint paint;
+    private Handler mainHandler;
+    private String gameTitle = "J2ME Game";
+    private int frameCount = 0;
 
-    public void setGameTitle(String title) {
-        this.currentGameName = title;
+    public EmulatorEngine() {
+        displayBitmap = Bitmap.createBitmap(240, 320, Bitmap.Config.ARGB_8888);
+        displayCanvas = new Canvas(displayBitmap);
+        paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mainHandler = new Handler(Looper.getMainLooper());
     }
 
     public void setFrameUpdateListener(FrameUpdateListener listener) {
-        this.listener = listener;
+        this.frameUpdateListener = listener;
+    }
+
+    public void setGameTitle(String title) {
+        this.gameTitle = title;
     }
 
     public void start() {
-        if (isRunning) return;
         isRunning = true;
-        gameThread = new Thread(this);
-        gameThread.start();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (isRunning) {
+                    renderFrame();
+                    if (frameUpdateListener != null) {
+                        frameUpdateListener.onFrameUpdate(displayBitmap);
+                    }
+                    try {
+                        Thread.sleep(33); // ~30 FPS
+                    } catch (InterruptedException ignored) {}
+                }
+            }
+        }).start();
+    }
+
+    private void renderFrame() {
+        frameCount++;
+        displayCanvas.drawColor(Color.parseColor("#0A0E17"));
+
+        // Renderizado del Canvas J2ME
+        paint.setColor(Color.WHITE);
+        paint.setTextSize(14);
+        displayCanvas.drawText("Ejecutando: " + gameTitle, 10, 25, paint);
+
+        // Simulador de renderizado gráfico de MIDlet
+        paint.setColor(Color.GREEN);
+        displayCanvas.drawRect(20, 40, 220, 280, paint);
+
+        paint.setColor(Color.BLACK);
+        paint.setTextSize(12);
+        displayCanvas.drawText("Cargando Clases MIDP...", 30, 150, paint);
+        displayCanvas.drawText("Frame: " + frameCount, 30, 180, paint);
+    }
+
+    public void sendKeyEvent(int keyCode, boolean isPressed) {
+        // Enviar eventos de teclado al Canvas activo del MIDlet
     }
 
     public void stop() {
         isRunning = false;
-        if (gameThread != null) {
-            try {
-                gameThread.join();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
-    }
-
-    public void sendKeyEvent(int keyCode, boolean isPressed) {
-        // Reservado para entrada de teclado
-    }
-
-    @Override
-    public void run() {
-        while (isRunning) {
-            long startTime = System.currentTimeMillis();
-
-            updateGameLogic();
-            if (listener != null) {
-                listener.onFrameUpdate(frameBuffer);
-            }
-
-            long elapsedTime = System.currentTimeMillis() - startTime;
-            long sleepTime = frameTimeMs - elapsedTime;
-
-            if (sleepTime > 0) {
-                try {
-                    Thread.sleep(sleepTime);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }
-        }
-    }
-
-    private void updateGameLogic() {
-        frameCounter++;
-        canvasBuffer.drawColor(Color.rgb(10, 25, 47));
-
-        paint.setColor(Color.WHITE);
-        paint.setTextSize(14);
-        canvasBuffer.drawText("J2ME Canvas Active", 10, 30, paint);
-
-        paint.setColor(Color.GREEN);
-        paint.setTextSize(12);
-        canvasBuffer.drawText("Juego: " + currentGameName, 10, 60, paint);
-
-        paint.setColor(Color.YELLOW);
-        int xPos = (frameCounter * 4) % 200 + 20;
-        canvasBuffer.drawRect(xPos, 100, xPos + 20, 120, paint);
-
-        paint.setColor(Color.CYAN);
-        canvasBuffer.drawText("FPS: 30 | Frame: " + frameCounter, 10, 290, paint);
     }
 }
