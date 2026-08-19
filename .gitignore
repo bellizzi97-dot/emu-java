@@ -1,0 +1,20 @@
+/build
+/.gradle
+/local.properties
+/.idea
+/.vscode
+*/.iml
+.gradle
+
+# Android
+app/build/
+**/build/
+captures/
+.externalNativeBuild
+
+# IntelliJ
+out/
+
+# Others
+.DS_Store
+*.log
